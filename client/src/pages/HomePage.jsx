@@ -305,17 +305,18 @@ const s = {
   catScroll: { display: 'flex', overflowX: 'auto', gap: 8, paddingRight: 16, paddingBottom: 4 },
   catItem: {
     display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-    flexShrink: 0, width: 106, cursor: 'pointer', border: 'none', background: 'transparent', padding: '4px 2px',
+    flexShrink: 0, width: 80, cursor: 'pointer', border: 'none', background: 'transparent', padding: '4px 2px',
   },
   catIconWrap: {
-    width: 98, height: 98, borderRadius: 28,
-    background: '#FFF3C4', border: '2px solid #F0E6CC',
+    width: 68, height: 68, borderRadius: '50%',
+    background: '#fff', border: '2px solid #F0E6CC',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     overflow: 'hidden', position: 'relative', flexShrink: 0,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
   },
-  catIcon: { width: '100%', height: '100%', objectFit: 'contain', padding: 4 },
-  catIconFallback: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 },
-  catName: { fontSize: 10, fontWeight: 600, color: '#3D2400', textAlign: 'center', lineHeight: 1.3, maxWidth: 104, wordBreak: 'break-word' },
+  catIcon: { width: '88%', height: '88%', objectFit: 'contain' },
+  catIconFallback: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 },
+  catName: { fontSize: 10, fontWeight: 600, color: '#3D2400', textAlign: 'center', lineHeight: 1.3, maxWidth: 78, wordBreak: 'break-word' },
 
   // Delivery
   deliveryCard: {
