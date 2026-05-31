@@ -33,7 +33,7 @@ function norm(s) {
   return (s || '').toLowerCase().replace(/[^a-z0-9а-яёa-z]/gi, '');
 }
 
-export default function HomePage({ onCategorySelect }) {
+export default function HomePage({ onCategorySelect, onCategoriesLoaded }) {
   const { total } = useCart();
   const [bannerIdx, setBannerIdx] = useState(0);
   const [categories, setCategories] = useState([]);
@@ -58,7 +58,10 @@ export default function HomePage({ onCategorySelect }) {
 
   useEffect(() => {
     fetchCategories()
-      .then(cats => setCategories(cats.filter(c => !c.parentId)))
+      .then(cats => {
+        setCategories(cats.filter(c => !c.parentId));
+        if (onCategoriesLoaded) onCategoriesLoaded(cats);
+      })
       .catch(console.error);
 
     fetchIconNames().then(setIconNames);

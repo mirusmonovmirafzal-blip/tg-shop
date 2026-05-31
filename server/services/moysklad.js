@@ -47,14 +47,16 @@ async function getProductImages(productId) {
   }
 }
 
-// Get products with pagination, optionally filtered by category or search query
-async function getProducts({ limit = 50, offset = 0, categoryId = null, search = null } = {}) {
+// Get products with pagination, optionally filtered by category (and all its subcategories) or search query
+async function getProducts({ limit = 50, offset = 0, categoryId = null, categoryIds = null, search = null } = {}) {
   let url = `/entity/product?limit=${limit}&offset=${offset}&expand=productFolder`;
 
   const filters = [];
-  if (categoryId) {
-    const folderHref = `${BASE_URL}/entity/productfolder/${categoryId}`;
-    filters.push(`productFolder=${encodeURIComponent(folderHref)}`);
+  const ids = categoryIds || (categoryId ? [categoryId] : null);
+  if (ids && ids.length) {
+    for (const id of ids) {
+      filters.push(`productFolder=${encodeURIComponent(`${BASE_URL}/entity/productfolder/${id}`)}`);
+    }
   }
   if (search) {
     filters.push(`name~=${encodeURIComponent(search)}`);
@@ -159,4 +161,4 @@ async function getDefaultOrganization() {
   return _orgCache;
 }
 
-module.exports = { getCategories, getProducts, getVariants, createOrder, getCategoryImage };
+module.exports = { getCategories, getProducts, getVariants, createOrder, getCategoryImage, BASE_URL };

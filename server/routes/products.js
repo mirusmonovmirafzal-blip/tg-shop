@@ -2,6 +2,19 @@ const express = require('express');
 const router = express.Router();
 const { getCategories, getProducts, getCategoryImage } = require('../services/moysklad');
 
+// Collect categoryId + all descendant IDs from the cached category list
+function collectCategoryIds(allCats, rootId) {
+  const ids = [rootId];
+  const queue = [rootId];
+  while (queue.length) {
+    const pid = queue.shift();
+    for (const c of allCats) {
+      if (c.parentId === pid) { ids.push(c.id); queue.push(c.id); }
+    }
+  }
+  return ids;
+}
+
 const cache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
 
@@ -29,14 +42,21 @@ router.get('/categories', async (req, res) => {
 router.get('/products', async (req, res) => {
   try {
     const { limit = 30, offset = 0, categoryId, search } = req.query;
-    // Don't cache search results
+
+    // Resolve categoryId → categoryId + all subcategory IDs
+    let categoryIds = null;
+    if (categoryId) {
+      const allCats = await cached('categories', getCategories);
+      categoryIds = collectCategoryIds(allCats, categoryId);
+    }
+
     if (search) {
-      const data = await getProducts({ limit: parseInt(limit), offset: parseInt(offset), categoryId, search });
+      const data = await getProducts({ limit: parseInt(limit), offset: parseInt(offset), categoryIds, search });
       return res.json(data);
     }
     const cacheKey = `products_${categoryId || 'all'}_${offset}_${limit}`;
     const data = await cached(cacheKey, () =>
-      getProducts({ limit: parseInt(limit), offset: parseInt(offset), categoryId })
+      getProducts({ limit: parseInt(limit), offset: parseInt(offset), categoryIds })
     );
     res.json(data);
   } catch (err) {
