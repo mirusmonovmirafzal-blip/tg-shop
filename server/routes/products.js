@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { getCategories, getProducts } = require('../services/moysklad');
+const { getCategories, getProducts, getCategoryImage } = require('../services/moysklad');
 
-// Simple in-memory cache (5 min TTL)
 const cache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
 
@@ -29,7 +28,7 @@ router.get('/categories', async (req, res) => {
 // GET /api/products?limit=50&offset=0&categoryId=xxx
 router.get('/products', async (req, res) => {
   try {
-    const { limit = 50, offset = 0, categoryId } = req.query;
+    const { limit = 30, offset = 0, categoryId } = req.query;
     const cacheKey = `products_${categoryId || 'all'}_${offset}_${limit}`;
     const data = await cached(cacheKey, () =>
       getProducts({ limit: parseInt(limit), offset: parseInt(offset), categoryId })
@@ -46,9 +45,28 @@ router.get('/image', async (req, res) => {
   const axios = require('axios');
   const { url } = req.query;
   if (!url) return res.status(400).send('No url');
-
   try {
     const response = await axios.get(url, {
+      headers: { Authorization: `Bearer ${process.env.MOYSKLAD_TOKEN}` },
+      responseType: 'stream',
+    });
+    res.set('Content-Type', response.headers['content-type'] || 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=86400');
+    response.data.pipe(res);
+  } catch {
+    res.status(404).send('Image not found');
+  }
+});
+
+// GET /api/category-image?id=xxx — proxy category image
+router.get('/category-image', async (req, res) => {
+  const axios = require('axios');
+  const { id } = req.query;
+  if (!id) return res.status(400).send('No id');
+  try {
+    const downloadHref = await cached(`cat-img-${id}`, () => getCategoryImage(id));
+    if (!downloadHref) return res.status(404).send('No image');
+    const response = await axios.get(downloadHref, {
       headers: { Authorization: `Bearer ${process.env.MOYSKLAD_TOKEN}` },
       responseType: 'stream',
     });

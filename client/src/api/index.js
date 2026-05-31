@@ -6,7 +6,7 @@ export async function fetchCategories() {
   return res.json();
 }
 
-export async function fetchProducts({ limit = 50, offset = 0, categoryId } = {}) {
+export async function fetchProducts({ limit = 30, offset = 0, categoryId } = {}) {
   const params = new URLSearchParams({ limit, offset });
   if (categoryId) params.set('categoryId', categoryId);
   const res = await fetch(`${BASE}/products?${params}`);
@@ -17,6 +17,10 @@ export async function fetchProducts({ limit = 50, offset = 0, categoryId } = {})
 export function getImageUrl(downloadHref) {
   if (!downloadHref) return null;
   return `${BASE}/image?url=${encodeURIComponent(downloadHref)}`;
+}
+
+export function getCategoryImageUrl(categoryId) {
+  return `${BASE}/category-image?id=${categoryId}`;
 }
 
 export async function createOrder(data) {

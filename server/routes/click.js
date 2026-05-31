@@ -2,15 +2,14 @@ const express = require('express');
 const router = express.Router();
 const { verifyPrepareSign, verifyCompleteSign, ERRORS } = require('../services/clickPayment');
 const { createOrder } = require('../services/moysklad');
-const { sendPaymentConfirmation } = require('../services/telegram');
+const { sendOrderNotification } = require('../services/telegram');
 const { pendingOrders } = require('./orders');
 
-// Click PREPARE (action=0) — called before payment
+// Click PREPARE (action=0)
 router.post('/prepare', async (req, res) => {
   const body = req.body;
-  const { merchant_trans_id, amount, action } = body;
+  const { merchant_trans_id, amount } = body;
 
-  // Verify signature
   if (!verifyPrepareSign(body)) {
     return res.json({ error: ERRORS.SIGN_FAILED, error_note: 'Invalid sign' });
   }
@@ -19,12 +18,10 @@ router.post('/prepare', async (req, res) => {
   if (!order) {
     return res.json({ error: ERRORS.ORDER_NOT_FOUND, error_note: 'Order not found' });
   }
-
   if (order.status === 'paid') {
     return res.json({ error: ERRORS.ALREADY_PAID, error_note: 'Already paid' });
   }
 
-  // Store click transaction id
   order.clickTransId = body.click_trans_id;
   order.merchantPrepareId = Date.now();
 
@@ -37,12 +34,11 @@ router.post('/prepare', async (req, res) => {
   });
 });
 
-// Click COMPLETE (action=1) — called after successful payment
+// Click COMPLETE (action=1)
 router.post('/complete', async (req, res) => {
   const body = req.body;
-  const { merchant_trans_id, merchant_prepare_id, error: clickError } = body;
+  const { merchant_trans_id, error: clickError } = body;
 
-  // Verify signature
   if (!verifyCompleteSign(body)) {
     return res.json({ error: ERRORS.SIGN_FAILED, error_note: 'Invalid sign' });
   }
@@ -51,12 +47,10 @@ router.post('/complete', async (req, res) => {
   if (!order) {
     return res.json({ error: ERRORS.ORDER_NOT_FOUND, error_note: 'Order not found' });
   }
-
   if (order.status === 'paid') {
     return res.json({ error: ERRORS.ALREADY_PAID, error_note: 'Already paid' });
   }
 
-  // Click returned an error
   if (parseInt(clickError) < 0) {
     order.status = 'cancelled';
     return res.json({
@@ -68,14 +62,14 @@ router.post('/complete', async (req, res) => {
     });
   }
 
-  // Payment successful — create order in MoySklad
+  // Payment successful — create order in MoySklad + send Telegram notification
   try {
     await createOrder(order);
     order.status = 'paid';
-    await sendPaymentConfirmation(order);
+    // Send Telegram notification ONLY after successful payment
+    await sendOrderNotification(order);
   } catch (err) {
-    console.error('MoySklad order creation failed:', err.message);
-    // Still confirm to Click — don't block payment
+    console.error('Post-payment processing failed:', err.message);
   }
 
   res.json({

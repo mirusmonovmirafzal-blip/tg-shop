@@ -1,15 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { createOrder } = require('../services/moysklad');
-const { sendOrderNotification } = require('../services/telegram');
-const { getPaymentUrl } = require('../services/clickPayment');
 
 // In-memory pending orders store
 const pendingOrders = new Map();
 let orderCounter = 1000;
 
 // POST /api/orders/create
-// Body: { items, customerName?, customerPhone?, customerAddress?, telegramUserId?, telegramUsername? }
 router.post('/create', async (req, res) => {
   try {
     const { items, customerName, customerPhone, customerAddress, telegramUserId, telegramUsername } = req.body;
@@ -21,7 +18,7 @@ router.post('/create', async (req, res) => {
     const orderId = `ORD-${++orderCounter}`;
     const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-    // Save pending order
+    // Save pending order (NO Telegram notification yet — only after payment)
     pendingOrders.set(orderId, {
       orderId,
       items,
@@ -35,10 +32,7 @@ router.post('/create', async (req, res) => {
       createdAt: new Date(),
     });
 
-    // Send initial Telegram notification
-    await sendOrderNotification(pendingOrders.get(orderId));
-
-    // Generate Click payment URL
+    const { getPaymentUrl } = require('../services/clickPayment');
     const returnUrl = `${process.env.APP_URL}/success?orderId=${orderId}`;
     const paymentUrl = getPaymentUrl({ orderId, amount: total, returnUrl });
 

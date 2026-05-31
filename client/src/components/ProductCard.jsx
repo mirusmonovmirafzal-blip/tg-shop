@@ -1,27 +1,46 @@
+import { useCart } from '../context/CartContext';
 import { getImageUrl } from '../api';
 
 function formatPrice(p) {
   return new Intl.NumberFormat('ru-RU').format(p) + ' сум';
 }
 
-export default function ProductCard({ product, onClick }) {
+export default function ProductCard({ product, onOpenModal }) {
+  const { dispatch } = useCart();
+
   const imageUrl = getImageUrl(product.imageUrl);
   const price = product.hasVariants && product.variants.length > 0
-    ? product.variants[0].price ?? product.price
+    ? (product.variants[0].price ?? product.price)
     : product.price;
 
+  function handlePlus(e) {
+    e.stopPropagation();
+    if (product.hasVariants && product.variants.length > 0) {
+      // Has variants — open modal to select
+      onOpenModal(product);
+    } else {
+      // No variants — add directly to cart
+      dispatch({
+        type: 'ADD',
+        item: {
+          productId: product.id,
+          variantId: null,
+          name: product.name,
+          variantName: null,
+          price: product.price,
+          imageUrl,
+        },
+      });
+    }
+  }
+
   return (
-    <div onClick={onClick} style={styles.card}>
+    <div style={styles.card} onClick={() => onOpenModal(product)}>
       <div style={styles.imageWrap}>
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={product.name}
-            style={styles.image}
-            loading="lazy"
-          />
+          <img src={imageUrl} alt={product.name} style={styles.image} loading="lazy" />
         ) : (
-          <div style={styles.imagePlaceholder}>🛍️</div>
+          <div style={styles.placeholder}>🛍️</div>
         )}
       </div>
       <div style={styles.body}>
@@ -30,7 +49,13 @@ export default function ProductCard({ product, onClick }) {
           <span style={styles.price}>
             {product.hasVariants ? 'от ' : ''}{formatPrice(price)}
           </span>
-          <div style={styles.addIcon}>+</div>
+          <button
+            onClick={handlePlus}
+            style={styles.addBtn}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            +
+          </button>
         </div>
       </div>
     </div>
@@ -39,54 +64,37 @@ export default function ProductCard({ product, onClick }) {
 
 const styles = {
   card: {
-    background: '#fff',
-    borderRadius: 16,
-    overflow: 'hidden',
+    background: '#fff', borderRadius: 16,
+    overflow: 'hidden', cursor: 'pointer',
     boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-    cursor: 'pointer',
-    transition: 'transform 0.15s, box-shadow 0.15s',
-    active: { transform: 'scale(0.97)' },
   },
   imageWrap: {
-    width: '100%',
-    paddingTop: '75%',
-    position: 'relative',
-    background: '#F5F6FA',
-    overflow: 'hidden',
+    width: '100%', paddingTop: '100%',
+    position: 'relative', background: '#F5F6FA',
   },
   image: {
-    position: 'absolute',
-    inset: 0,
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
+    position: 'absolute', inset: 0,
+    width: '100%', height: '100%', objectFit: 'cover',
   },
-  imagePlaceholder: {
-    position: 'absolute',
-    inset: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 32,
+  placeholder: {
+    position: 'absolute', inset: 0,
+    display: 'flex', alignItems: 'center',
+    justifyContent: 'center', fontSize: 32,
   },
-  body: { padding: '10px 12px 12px' },
+  body: { padding: '10px 10px 12px' },
   name: {
-    fontSize: 13,
-    fontWeight: 500,
-    color: '#1A1A2E',
-    lineHeight: 1.4,
-    display: '-webkit-box',
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: 'vertical',
-    overflow: 'hidden',
-    marginBottom: 8,
+    fontSize: 12, fontWeight: 500, color: '#1A1A2E',
+    lineHeight: 1.4, marginBottom: 8,
+    display: '-webkit-box', WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical', overflow: 'hidden',
   },
   footer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-  price: { fontSize: 13, fontWeight: 700, color: '#5B67F8' },
-  addIcon: {
-    width: 28, height: 28, borderRadius: 8,
-    background: '#5B67F8', color: '#fff',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  price: { fontSize: 12, fontWeight: 700, color: '#1A1A2E' },
+  addBtn: {
+    width: 30, height: 30, borderRadius: 8,
+    background: '#1A1A2E', color: '#fff',
     fontSize: 20, fontWeight: 300, lineHeight: 1,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
   },
 };
