@@ -47,31 +47,28 @@ async function getProductImages(productId) {
   }
 }
 
-// Get products with pagination, optionally filtered by category (and all its subcategories) or search query
-async function getProducts({ limit = 50, offset = 0, categoryId = null, categoryIds = null, search = null } = {}) {
+// Fetch raw product rows for a single folder filter (or no filter if folderId is null)
+async function fetchRawProducts({ limit, offset, folderId = null, search = null }) {
   let url = `/entity/product?limit=${limit}&offset=${offset}&expand=productFolder`;
-
   const filters = [];
-  const ids = categoryIds || (categoryId ? [categoryId] : null);
-  if (ids && ids.length) {
-    for (const id of ids) {
-      filters.push(`productFolder=${encodeURIComponent(`${BASE_URL}/entity/productfolder/${id}`)}`);
-    }
+  if (folderId) {
+    filters.push(`productFolder=${encodeURIComponent(`${BASE_URL}/entity/productfolder/${folderId}`)}`);
   }
   if (search) {
     filters.push(`name~=${encodeURIComponent(search)}`);
   }
-  if (filters.length) {
-    url += `&filter=${filters.join(';')}`;
-  }
-
+  if (filters.length) url += `&filter=${filters.join(';')}`;
+  console.log('[MoySklad] GET', url);
   const res = await api.get(url);
-  const products = [];
+  console.log(`[MoySklad] returned ${res.data.rows.length} / ${res.data.meta.size} products`);
+  return res.data;
+}
 
-  for (const p of res.data.rows) {
+async function buildProductsSequentially(rows) {
+  const products = [];
+  for (const p of rows) {
     const price = p.salePrices?.[0]?.value ? formatPrice(p.salePrices[0].value) : 0;
     const images = await getProductImages(p.id);
-
     const product = {
       id: p.id,
       name: p.name,
@@ -84,19 +81,41 @@ async function getProducts({ limit = 50, offset = 0, categoryId = null, category
       hasVariants: (p.variantsCount || 0) > 0,
       variants: [],
     };
-
     if (product.hasVariants) {
       product.variants = await getVariants(p.id, p.meta.href);
     }
-
     products.push(product);
   }
+  return products;
+}
 
-  return {
-    products,
-    total: res.data.meta.size,
-    offset: res.data.meta.offset,
-  };
+// Get products with pagination, optionally filtered by category (and all its subcategories) or search query
+async function getProducts({ limit = 50, offset = 0, categoryId = null, categoryIds = null, search = null } = {}) {
+  const ids = categoryIds || (categoryId ? [categoryId] : null);
+
+  // Multiple folders: fetch sequentially per folder, merge, then paginate server-side
+  if (ids && ids.length > 1) {
+    const seen = new Set();
+    const merged = [];
+    for (const id of ids) {
+      try {
+        const data = await fetchRawProducts({ limit: 1000, offset: 0, folderId: id, search });
+        for (const p of data.rows) {
+          if (!seen.has(p.id)) { seen.add(p.id); merged.push(p); }
+        }
+      } catch (e) {
+        console.error(`[MoySklad] folder ${id} error:`, e.message);
+      }
+    }
+    const page = merged.slice(offset, offset + limit);
+    const products = await buildProductsSequentially(page);
+    return { products, total: merged.length, offset };
+  }
+
+  // Single folder or no filter
+  const data = await fetchRawProducts({ limit, offset, folderId: ids ? ids[0] : null, search });
+  const products = await buildProductsSequentially(data.rows);
+  return { products, total: data.meta.size, offset: data.meta.offset };
 }
 
 // Get variants (modifications) for a product
