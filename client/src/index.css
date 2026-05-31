@@ -1,13 +1,13 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --primary: #1A1A2E;
-  --accent: #5B67F8;
-  --bg: #F5F6FA;
+  --primary: #F5A623;
+  --accent: #F5A623;
+  --bg: #FFFBF0;
   --card: #FFFFFF;
-  --text: #1A1A2E;
-  --text-secondary: #6B7280;
-  --border: #EBEBEB;
+  --text: #3D2400;
+  --text-secondary: #B89A60;
+  --border: #F0E6CC;
   --nav-height: 80px;
   --radius: 16px;
   --tg-vh: 100vh;
