@@ -1,0 +1,30 @@
+const BASE = '/api';
+
+export async function fetchCategories() {
+  const res = await fetch(`${BASE}/categories`);
+  if (!res.ok) throw new Error('Failed to load categories');
+  return res.json();
+}
+
+export async function fetchProducts({ limit = 50, offset = 0, categoryId } = {}) {
+  const params = new URLSearchParams({ limit, offset });
+  if (categoryId) params.set('categoryId', categoryId);
+  const res = await fetch(`${BASE}/products?${params}`);
+  if (!res.ok) throw new Error('Failed to load products');
+  return res.json();
+}
+
+export function getImageUrl(downloadHref) {
+  if (!downloadHref) return null;
+  return `${BASE}/image?url=${encodeURIComponent(downloadHref)}`;
+}
+
+export async function createOrder(data) {
+  const res = await fetch(`${BASE}/orders/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create order');
+  return res.json();
+}
