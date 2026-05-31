@@ -96,33 +96,55 @@ async function buildProductsSequentially(rows) {
   return products;
 }
 
-// Get products with pagination, optionally filtered by category (and all its subcategories) or search query
-async function getProducts({ limit = 50, offset = 0, categoryId = null, categoryIds = null, search = null } = {}) {
-  const ids = categoryIds || (categoryId ? [categoryId] : null);
+// In-memory cache of ALL raw product rows (no images), refreshed every 5 min
+let _allRowsCache = null;
+let _allRowsCacheTime = 0;
+const ALL_CACHE_TTL = 5 * 60 * 1000;
 
-  // Multiple folders: fetch sequentially per folder, merge, then paginate server-side
-  if (ids && ids.length > 1) {
-    const seen = new Set();
-    const merged = [];
-    for (const id of ids) {
-      try {
-        const data = await fetchRawProducts({ limit: 1000, offset: 0, folderId: id, search });
-        for (const p of data.rows) {
-          if (!seen.has(p.id)) { seen.add(p.id); merged.push(p); }
-        }
-      } catch (e) {
-        console.error(`[MoySklad] folder ${id} error:`, e.message);
-      }
-    }
-    const page = merged.slice(offset, offset + limit);
-    const products = await buildProductsSequentially(page);
-    return { products, total: merged.length, offset };
+async function getAllRawProducts() {
+  if (_allRowsCache && Date.now() - _allRowsCacheTime < ALL_CACHE_TTL) {
+    return _allRowsCache;
+  }
+  const allRows = [];
+  let offset = 0;
+  const limit = 100;
+  let total = Infinity;
+  while (offset < total) {
+    const data = await fetchRawProducts({ limit, offset });
+    total = data.meta.size;
+    allRows.push(...data.rows);
+    offset += data.rows.length;
+    if (data.rows.length < limit) break;
+  }
+  console.log(`[MoySklad] all-products cache loaded: ${allRows.length} rows`);
+  _allRowsCache = allRows;
+  _allRowsCacheTime = Date.now();
+  return allRows;
+}
+
+// Get products with pagination, optionally filtered by category or search query
+async function getProducts({ limit = 50, offset = 0, categoryIds = null, search = null } = {}) {
+  // Search: MoySklad name~ filter works fine
+  if (search) {
+    const data = await fetchRawProducts({ limit, offset, search });
+    const products = await buildProductsSequentially(data.rows);
+    return { products, total: data.meta.size, offset: data.meta.offset };
   }
 
-  // Single folder or no filter
-  const data = await fetchRawProducts({ limit, offset, folderId: ids ? ids[0] : null, search });
-  const products = await buildProductsSequentially(data.rows);
-  return { products, total: data.meta.size, offset: data.meta.offset };
+  // No category filter: direct paginated request (fast)
+  if (!categoryIds || categoryIds.length === 0) {
+    const data = await fetchRawProducts({ limit, offset });
+    const products = await buildProductsSequentially(data.rows);
+    return { products, total: data.meta.size, offset: data.meta.offset };
+  }
+
+  // Category filter: load all rows into cache, filter in-memory
+  const allRows = await getAllRawProducts();
+  const idsSet = new Set(categoryIds);
+  const filtered = allRows.filter(p => p.productFolder && idsSet.has(p.productFolder.id));
+  const page = filtered.slice(offset, offset + limit);
+  const products = await buildProductsSequentially(page);
+  return { products, total: filtered.length, offset };
 }
 
 // Get variants (modifications) for a product
