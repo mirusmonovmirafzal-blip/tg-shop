@@ -4,6 +4,7 @@ import CartItem from '../components/CartItem';
 import { createOrder } from '../api';
 
 const FREE_DELIVERY = 800000;
+const DELIVERY_FEE = 30000;
 
 function formatPrice(p) {
   return new Intl.NumberFormat('ru-RU').format(p) + ' сум';
@@ -137,13 +138,15 @@ export default function CartPage() {
           <div style={{ ...s.row, marginTop: 6 }}>
             <span style={s.lbl}>Доставка</span>
             <span style={{ ...s.val, color: isFreeDelivery ? '#22C55E' : '#3D2400' }}>
-              {isFreeDelivery ? 'Бесплатно' : 'Уточняйте'}
+              {isFreeDelivery ? 'Бесплатно' : formatPrice(DELIVERY_FEE)}
             </span>
           </div>
           <div style={{ height: 1, background: '#F0E6CC', margin: '12px 0' }} />
           <div style={s.row}>
             <span style={{ ...s.lbl, fontSize: 16, fontWeight: 700, color: '#3D2400' }}>Итого</span>
-            <span style={{ fontSize: 18, fontWeight: 800, color: '#3D2400' }}>{formatPrice(total)}</span>
+            <span style={{ fontSize: 18, fontWeight: 800, color: '#3D2400' }}>
+              {formatPrice(total + (isFreeDelivery ? 0 : DELIVERY_FEE))}
+            </span>
           </div>
         </div>
 
@@ -152,7 +155,7 @@ export default function CartPage() {
 
       <div style={s.stickyFooter}>
         <button onClick={handleOrder} disabled={loading} style={s.payBtn}>
-          {loading ? 'Оформление...' : `Оплатить через Click • ${formatPrice(total)}`}
+          {loading ? 'Оформление...' : `Оплатить через Click • ${formatPrice(total + (isFreeDelivery ? 0 : DELIVERY_FEE))}`}
         </button>
       </div>
     </div>
@@ -208,7 +211,7 @@ const s = {
   lbl: { fontSize: 14, color: '#B89A60' },
   val: { fontSize: 14, fontWeight: 600, color: '#3D2400' },
   err: { color: '#EF4444', fontSize: 13, textAlign: 'center', marginBottom: 10 },
-  stickyFooter: { flexShrink: 0, padding: '12px 16px 96px', background: '#FFFBF0' },
+  stickyFooter: { flexShrink: 0, padding: '12px 16px calc(88px + env(safe-area-inset-bottom))', background: '#FFFBF0' },
   payBtn: {
     width: '100%', padding: '16px 0', borderRadius: 16,
     background: '#F5A623', color: '#fff', fontSize: 15, fontWeight: 700,

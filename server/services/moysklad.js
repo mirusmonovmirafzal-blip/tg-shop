@@ -47,13 +47,20 @@ async function getProductImages(productId) {
   }
 }
 
-// Get products with pagination, optionally filtered by category
-async function getProducts({ limit = 50, offset = 0, categoryId = null } = {}) {
+// Get products with pagination, optionally filtered by category or search query
+async function getProducts({ limit = 50, offset = 0, categoryId = null, search = null } = {}) {
   let url = `/entity/product?limit=${limit}&offset=${offset}&expand=productFolder`;
 
+  const filters = [];
   if (categoryId) {
     const folderHref = `${BASE_URL}/entity/productfolder/${categoryId}`;
-    url += `&filter=productFolder=${encodeURIComponent(folderHref)}`;
+    filters.push(`productFolder=${encodeURIComponent(folderHref)}`);
+  }
+  if (search) {
+    filters.push(`name~=${encodeURIComponent(search)}`);
+  }
+  if (filters.length) {
+    url += `&filter=${filters.join(';')}`;
   }
 
   const res = await api.get(url);

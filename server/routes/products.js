@@ -25,10 +25,15 @@ router.get('/categories', async (req, res) => {
   }
 });
 
-// GET /api/products?limit=50&offset=0&categoryId=xxx
+// GET /api/products?limit=50&offset=0&categoryId=xxx&search=yyy
 router.get('/products', async (req, res) => {
   try {
-    const { limit = 30, offset = 0, categoryId } = req.query;
+    const { limit = 30, offset = 0, categoryId, search } = req.query;
+    // Don't cache search results
+    if (search) {
+      const data = await getProducts({ limit: parseInt(limit), offset: parseInt(offset), categoryId, search });
+      return res.json(data);
+    }
     const cacheKey = `products_${categoryId || 'all'}_${offset}_${limit}`;
     const data = await cached(cacheKey, () =>
       getProducts({ limit: parseInt(limit), offset: parseInt(offset), categoryId })
@@ -37,6 +42,22 @@ router.get('/products', async (req, res) => {
   } catch (err) {
     console.error('Products error:', err.message);
     res.status(500).json({ error: 'Ошибка загрузки товаров' });
+  }
+});
+
+// GET /api/icon-names — list available icon filenames for fuzzy matching
+router.get('/icon-names', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const iconsDir = path.join(__dirname, '../../client/dist/icons');
+  try {
+    if (fs.existsSync(iconsDir)) {
+      const files = fs.readdirSync(iconsDir).filter(f => /\.(PNG|png)$/i.test(f));
+      return res.json(files);
+    }
+    res.json([]);
+  } catch {
+    res.json([]);
   }
 });
 

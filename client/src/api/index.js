@@ -6,12 +6,21 @@ export async function fetchCategories() {
   return res.json();
 }
 
-export async function fetchProducts({ limit = 30, offset = 0, categoryId } = {}) {
+export async function fetchProducts({ limit = 30, offset = 0, categoryId, search } = {}) {
   const params = new URLSearchParams({ limit, offset });
   if (categoryId) params.set('categoryId', categoryId);
+  if (search) params.set('search', search);
   const res = await fetch(`${BASE}/products?${params}`);
   if (!res.ok) throw new Error('Failed to load products');
   return res.json();
+}
+
+export async function fetchIconNames() {
+  try {
+    const res = await fetch(`${BASE}/icon-names`);
+    if (!res.ok) return [];
+    return res.json();
+  } catch { return []; }
 }
 
 export function getImageUrl(downloadHref) {

@@ -91,7 +91,7 @@ export default function CatalogPage({ category, onBack }) {
 }
 
 const s = {
-  page: { height: '100%', display: 'flex', flexDirection: 'column', background: '#FFFBF0', paddingBottom: 80 },
+  page: { height: '100%', display: 'flex', flexDirection: 'column', background: '#FFFBF0', paddingBottom: 'calc(72px + env(safe-area-inset-bottom))' },
   header: {
     padding: '12px 16px', background: '#FFFBF0',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',

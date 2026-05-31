@@ -64,7 +64,7 @@ const s = {
   },
   bar: {
     display: 'flex', justifyContent: 'space-around',
-    padding: '8px 0 6px',
+    padding: '10px 0 8px',
   },
   tab: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,

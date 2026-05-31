@@ -148,7 +148,7 @@ function InfoRow({ icon, label, value, last }) {
 }
 
 const s = {
-  page: { height: '100%', display: 'flex', flexDirection: 'column', background: '#FFFBF0', paddingBottom: 80 },
+  page: { height: '100%', display: 'flex', flexDirection: 'column', background: '#FFFBF0', paddingBottom: 'calc(72px + env(safe-area-inset-bottom))' },
   header: {
     padding: '14px 16px 12px', background: '#FFFBF0',
     borderBottom: '1px solid #F0E6CC',
