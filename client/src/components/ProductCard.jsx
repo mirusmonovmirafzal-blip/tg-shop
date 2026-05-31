@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { getImageUrl } from '../api';
 
@@ -7,6 +8,7 @@ function formatPrice(p) {
 
 export default function ProductCard({ product, onOpenModal }) {
   const { dispatch } = useCart();
+  const [added, setAdded] = useState(false);
 
   const imageUrl = getImageUrl(product.imageUrl);
   const price = product.hasVariants && product.variants.length > 0
@@ -16,10 +18,8 @@ export default function ProductCard({ product, onOpenModal }) {
   function handlePlus(e) {
     e.stopPropagation();
     if (product.hasVariants && product.variants.length > 0) {
-      // Has variants — open modal to select
       onOpenModal(product);
     } else {
-      // No variants — add directly to cart
       dispatch({
         type: 'ADD',
         item: {
@@ -31,6 +31,8 @@ export default function ProductCard({ product, onOpenModal }) {
           imageUrl,
         },
       });
+      setAdded(true);
+      setTimeout(() => setAdded(false), 700);
     }
   }
 
@@ -51,10 +53,14 @@ export default function ProductCard({ product, onOpenModal }) {
           </span>
           <button
             onClick={handlePlus}
-            style={styles.addBtn}
             onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              ...styles.addBtn,
+              ...(added ? styles.addBtnDone : {}),
+              animation: added ? 'cartBounce 0.5s ease' : 'none',
+            }}
           >
-            +
+            {added ? '✓' : '+'}
           </button>
         </div>
       </div>
@@ -69,8 +75,10 @@ const styles = {
     boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
   },
   imageWrap: {
-    width: '100%', paddingTop: '100%',
+    width: '100%',
+    paddingTop: '133.33%', // 3:4 ratio
     position: 'relative', background: '#F5F6FA',
+    overflow: 'hidden',
   },
   image: {
     position: 'absolute', inset: 0,
@@ -95,6 +103,7 @@ const styles = {
     background: '#1A1A2E', color: '#fff',
     fontSize: 20, fontWeight: 300, lineHeight: 1,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    flexShrink: 0,
+    flexShrink: 0, transition: 'background 0.2s',
   },
+  addBtnDone: { background: '#22C55E', fontSize: 16 },
 };

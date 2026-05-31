@@ -3,57 +3,66 @@ const tg = window.Telegram?.WebApp;
 export default function AccountPage() {
   const user = tg?.initDataUnsafe?.user;
 
+  function openSupport() {
+    const url = 'https://t.me/wishesuz';
+    if (tg) tg.openLink(url);
+    else window.open(url, '_blank');
+  }
+
   return (
     <div style={styles.page}>
-      <div style={styles.header}><h1 style={styles.headerTitle}>Аккаунт</h1></div>
+      <div style={styles.header}><h1 style={styles.title}>Аккаунт</h1></div>
       <div style={styles.scroll}>
-        {user ? (
-          <div style={styles.profileCard}>
-            {user.photo_url ? (
-              <img src={user.photo_url} alt="" style={styles.avatar} />
-            ) : (
-              <div style={styles.avatarPlaceholder}>
-                {(user.first_name || 'U')[0].toUpperCase()}
-              </div>
-            )}
-            <div>
-              <p style={styles.userName}>{user.first_name} {user.last_name || ''}</p>
-              {user.username && <p style={styles.userHandle}>@{user.username}</p>}
+        {/* Profile */}
+        <div style={styles.profileCard}>
+          {user?.photo_url ? (
+            <img src={user.photo_url} alt="" style={styles.avatar} />
+          ) : (
+            <div style={styles.avatarPlaceholder}>
+              {user ? (user.first_name || 'U')[0].toUpperCase() : '👤'}
             </div>
+          )}
+          <div>
+            <p style={styles.userName}>
+              {user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : 'Гость'}
+            </p>
+            {user?.username && <p style={styles.userHandle}>@{user.username}</p>}
           </div>
-        ) : (
-          <div style={styles.profileCard}>
-            <div style={styles.avatarPlaceholder}>👤</div>
-            <p style={styles.userName}>Гость</p>
-          </div>
-        )}
-
-        <div style={styles.infoCard}>
-          <InfoRow icon="🛍️" label="Магазин" value="Baby Bee" />
-          <InfoRow icon="📞" label="Поддержка" value="Написать в Telegram" link />
-          <InfoRow icon="📦" label="Доставка" value="Уточняйте при заказе" />
         </div>
+
+        {/* Info */}
+        <div style={styles.card}>
+          <Row icon="🐝" label="Магазин" value="Baby Bee" />
+          <Row icon="📦" label="Доставка" value="Уточняйте при заказе" />
+          <Row icon="💳" label="Оплата" value="Click" />
+        </div>
+
+        {/* Support button */}
+        <button onClick={openSupport} style={styles.supportBtn}>
+          <span style={{ fontSize: 20 }}>💬</span>
+          <span>Написать в поддержку</span>
+        </button>
       </div>
     </div>
   );
 }
 
-function InfoRow({ icon, label, value, link }) {
+function Row({ icon, label, value }) {
   return (
-    <div style={styles.infoRow}>
-      <span style={styles.infoIcon}>{icon}</span>
-      <div style={styles.infoText}>
-        <span style={styles.infoLabel}>{label}</span>
-        <span style={{ ...styles.infoValue, color: link ? '#5B67F8' : '#1A1A2E' }}>{value}</span>
+    <div style={styles.row}>
+      <span style={styles.rowIcon}>{icon}</span>
+      <div style={styles.rowText}>
+        <span style={styles.rowLabel}>{label}</span>
+        <span style={styles.rowValue}>{value}</span>
       </div>
     </div>
   );
 }
 
 const styles = {
-  page: { height: '100vh', display: 'flex', flexDirection: 'column', background: '#F5F6FA', paddingBottom: 88 },
+  page: { height: '100%', display: 'flex', flexDirection: 'column', background: '#F5F6FA', paddingBottom: 88 },
   header: { padding: '14px 16px 12px', background: '#fff', borderBottom: '1px solid #F0F0F0' },
-  headerTitle: { fontSize: 20, fontWeight: 800, color: '#1A1A2E' },
+  title: { fontSize: 20, fontWeight: 800, color: '#1A1A2E', textAlign: 'center' },
   scroll: { flex: 1, overflowY: 'auto', padding: '16px' },
   profileCard: {
     background: '#fff', borderRadius: 16, padding: '20px',
@@ -69,16 +78,23 @@ const styles = {
   },
   userName: { fontSize: 17, fontWeight: 700, color: '#1A1A2E' },
   userHandle: { fontSize: 13, color: '#6B7280', marginTop: 2 },
-  infoCard: {
+  card: {
     background: '#fff', borderRadius: 16, padding: '4px 16px',
-    boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
+    marginBottom: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
   },
-  infoRow: {
+  row: {
     display: 'flex', alignItems: 'center', gap: 12,
     padding: '14px 0', borderBottom: '1px solid #F5F5F5',
   },
-  infoIcon: { fontSize: 18, flexShrink: 0 },
-  infoText: { display: 'flex', flexDirection: 'column', gap: 2 },
-  infoLabel: { fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.4 },
-  infoValue: { fontSize: 14, fontWeight: 600 },
+  rowIcon: { fontSize: 18, flexShrink: 0 },
+  rowText: { display: 'flex', flexDirection: 'column', gap: 2 },
+  rowLabel: { fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.4 },
+  rowValue: { fontSize: 14, fontWeight: 600, color: '#1A1A2E' },
+  supportBtn: {
+    width: '100%', padding: '16px', borderRadius: 16,
+    background: '#1A1A2E', color: '#fff',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+    fontSize: 15, fontWeight: 600,
+    boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+  },
 };

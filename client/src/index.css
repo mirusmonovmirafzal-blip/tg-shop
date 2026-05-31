@@ -2,22 +2,19 @@
 
 :root {
   --primary: #1A1A2E;
-  --primary-light: #F0F0F5;
   --accent: #5B67F8;
   --bg: #F5F6FA;
   --card: #FFFFFF;
   --text: #1A1A2E;
   --text-secondary: #6B7280;
   --border: #EBEBEB;
-  --nav-bg: #1A1A2E;
-  --nav-height: 72px;
-  --header-height: 56px;
+  --nav-height: 80px;
   --radius: 16px;
-  --radius-sm: 10px;
-  --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  --tg-vh: 100vh;
 }
 
-html, body, #root { height: 100%; overflow: hidden; }
+html { height: var(--tg-vh); }
+body, #root { height: 100%; overflow: hidden; }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -34,7 +31,16 @@ img { display: block; max-width: 100%; }
 ::-webkit-scrollbar { display: none; }
 * { scrollbar-width: none; }
 
-@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-@keyframes slideUp { from { transform: translateY(30px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
-@keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.4 } }
-@keyframes scaleIn { from { transform: scale(0.95); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+@keyframes slideUp { from { transform:translateY(30px);opacity:0 } to { transform:translateY(0);opacity:1 } }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+@keyframes cartBounce {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.35); }
+  60%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+@keyframes flyToCart {
+  0%   { transform: scale(1) translateY(0); opacity: 1; }
+  100% { transform: scale(0.3) translateY(-60px); opacity: 0; }
+}

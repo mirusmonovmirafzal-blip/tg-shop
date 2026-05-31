@@ -19,18 +19,14 @@ export default function CartPage() {
 
   async function handleOrder() {
     if (items.length === 0) return;
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
       const user = tg?.initDataUnsafe?.user;
       const { paymentUrl } = await createOrder({
         items: items.map((i) => ({
-          productId: i.productId,
-          variantId: i.variantId,
-          name: i.name,
-          variantName: i.variantName,
-          price: i.price,
-          quantity: i.quantity,
+          productId: i.productId, variantId: i.variantId,
+          name: i.name, variantName: i.variantName,
+          price: i.price, quantity: i.quantity,
         })),
         customerName: name || null,
         customerPhone: phone || null,
@@ -42,16 +38,14 @@ export default function CartPage() {
       if (tg) tg.openLink(paymentUrl);
       else window.location.href = paymentUrl;
     } catch {
-      setError('Ошибка оформления заказа. Попробуйте снова.');
-    } finally {
-      setLoading(false);
-    }
+      setError('Ошибка оформления. Попробуйте снова.');
+    } finally { setLoading(false); }
   }
 
   if (items.length === 0) {
     return (
       <div style={styles.page}>
-        <div style={styles.header}><h1 style={styles.headerTitle}>Корзина</h1></div>
+        <div style={styles.header}><h1 style={styles.title}>Корзина</h1></div>
         <div style={styles.empty}>
           <p style={{ fontSize: 52 }}>🛒</p>
           <p style={{ fontSize: 16, fontWeight: 600, marginTop: 12 }}>Корзина пуста</p>
@@ -63,7 +57,9 @@ export default function CartPage() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.header}><h1 style={styles.headerTitle}>Корзина</h1></div>
+      <div style={styles.header}><h1 style={styles.title}>Корзина</h1></div>
+
+      {/* Scrollable area stops before sticky footer */}
       <div style={styles.scroll}>
         <div style={styles.section}>
           {items.map((item) => <CartItem key={item.key} item={item} />)}
@@ -78,17 +74,20 @@ export default function CartPage() {
 
         <div style={styles.summary}>
           <div style={styles.row}>
-            <span style={styles.label}>Товаров</span>
+            <span style={styles.lbl}>Товаров</span>
             <span style={styles.val}>{items.reduce((s, i) => s + i.quantity, 0)} шт.</span>
           </div>
           <div style={{ ...styles.row, marginTop: 8 }}>
-            <span style={{ ...styles.label, fontSize: 16, fontWeight: 700, color: '#1A1A2E' }}>Итого</span>
+            <span style={{ ...styles.lbl, fontSize: 16, fontWeight: 700, color: '#1A1A2E' }}>Итого</span>
             <span style={{ ...styles.val, fontSize: 18, fontWeight: 800, color: '#1A1A2E' }}>{formatPrice(total)}</span>
           </div>
         </div>
 
-        {error && <p style={styles.error}>{error}</p>}
+        {error && <p style={styles.err}>{error}</p>}
+      </div>
 
+      {/* Sticky pay button — stays visible even when keyboard opens */}
+      <div style={styles.stickyFooter}>
         <button onClick={handleOrder} disabled={loading} style={styles.payBtn}>
           {loading ? 'Оформление...' : `Оплатить через Click • ${formatPrice(total)}`}
         </button>
@@ -100,22 +99,21 @@ export default function CartPage() {
 function Field({ placeholder, value, onChange, icon, type = 'text' }) {
   return (
     <div style={styles.field}>
-      <span style={styles.fieldIcon}>{icon}</span>
+      <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
       <input
         type={type} placeholder={placeholder} value={value}
-        onChange={(e) => onChange(e.target.value)} style={styles.input}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ flex: 1, fontSize: 14, color: '#1A1A2E', border: 'none', outline: 'none', background: 'transparent' }}
       />
     </div>
   );
 }
 
 const styles = {
-  page: { height: '100vh', display: 'flex', flexDirection: 'column', background: '#F5F6FA', paddingBottom: 88 },
-  header: {
-    padding: '14px 16px 12px', background: '#fff', borderBottom: '1px solid #F0F0F0',
-  },
-  headerTitle: { fontSize: 20, fontWeight: 800, color: '#1A1A2E' },
-  scroll: { flex: 1, overflowY: 'auto', padding: '12px 16px 16px' },
+  page: { height: '100%', display: 'flex', flexDirection: 'column', background: '#F5F6FA' },
+  header: { padding: '14px 16px 12px', background: '#fff', borderBottom: '1px solid #F0F0F0', flexShrink: 0 },
+  title: { fontSize: 20, fontWeight: 800, color: '#1A1A2E', textAlign: 'center' },
+  scroll: { flex: 1, overflowY: 'auto', padding: '12px 16px 8px' },
   section: {
     background: '#fff', borderRadius: 16, padding: '4px 16px 8px',
     marginBottom: 10, boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
@@ -125,20 +123,24 @@ const styles = {
     display: 'flex', alignItems: 'center', gap: 10,
     borderBottom: '1px solid #F5F5F5', padding: '12px 0',
   },
-  fieldIcon: { fontSize: 16, flexShrink: 0 },
-  input: { flex: 1, fontSize: 14, color: '#1A1A2E', border: 'none', outline: 'none', background: 'transparent' },
   summary: {
     background: '#fff', borderRadius: 16, padding: '16px',
-    marginBottom: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
+    marginBottom: 10, boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
   },
   row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  label: { fontSize: 14, color: '#6B7280' },
-  val: { fontSize: 15, fontWeight: 600, color: '#1A1A2E' },
+  lbl: { fontSize: 14, color: '#6B7280' },
+  val: { fontSize: 15, fontWeight: 600 },
+  err: { color: '#EF4444', fontSize: 13, textAlign: 'center', marginBottom: 10 },
+  stickyFooter: {
+    flexShrink: 0,
+    padding: '12px 16px',
+    background: '#F5F6FA',
+    paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
+  },
   payBtn: {
     width: '100%', padding: '16px 0', borderRadius: 16,
     background: '#1A1A2E', color: '#fff', fontSize: 15, fontWeight: 700,
-    boxShadow: '0 4px 16px rgba(0,0,0,0.2)', marginBottom: 8,
+    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
   },
-  error: { color: '#EF4444', fontSize: 13, textAlign: 'center', marginBottom: 10 },
   empty: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' },
 };
