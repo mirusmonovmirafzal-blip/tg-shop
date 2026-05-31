@@ -133,9 +133,8 @@ const styles = {
   err: { color: '#EF4444', fontSize: 13, textAlign: 'center', marginBottom: 10 },
   stickyFooter: {
     flexShrink: 0,
-    padding: '12px 16px',
+    padding: '12px 16px 96px',
     background: '#F5F6FA',
-    paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
   },
   payBtn: {
     width: '100%', padding: '16px 0', borderRadius: 16,
