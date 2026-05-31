@@ -49,19 +49,26 @@ async function getProductImages(productId) {
 
 // Fetch raw product rows for a single folder filter (or no filter if folderId is null)
 async function fetchRawProducts({ limit, offset, folderId = null, search = null }) {
-  let url = `/entity/product?limit=${limit}&offset=${offset}&expand=productFolder`;
-  const filters = [];
+  const params = { limit, offset, expand: 'productFolder' };
+  const filterParts = [];
   if (folderId) {
-    filters.push(`productFolder=${encodeURIComponent(`${BASE_URL}/entity/productfolder/${folderId}`)}`);
+    filterParts.push(`productFolder=${BASE_URL}/entity/productfolder/${folderId}`);
   }
   if (search) {
-    filters.push(`name~=${encodeURIComponent(search)}`);
+    filterParts.push(`name~=${search}`);
   }
-  if (filters.length) url += `&filter=${filters.join(';')}`;
-  console.log('[MoySklad] GET', url);
-  const res = await api.get(url);
-  console.log(`[MoySklad] returned ${res.data.rows.length} / ${res.data.meta.size} products`);
-  return res.data;
+  if (filterParts.length) params.filter = filterParts.join(';');
+
+  console.log('[MoySklad] GET /entity/product params:', JSON.stringify(params));
+  try {
+    const res = await api.get('/entity/product', { params });
+    console.log(`[MoySklad] returned ${res.data.rows.length} / ${res.data.meta.size} products`);
+    return res.data;
+  } catch (err) {
+    const detail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+    console.error(`[MoySklad] error ${err.response?.status}: ${detail}`);
+    throw err;
+  }
 }
 
 async function buildProductsSequentially(rows) {
