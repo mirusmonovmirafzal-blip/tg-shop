@@ -6,6 +6,7 @@ import CatalogPage from './pages/CatalogPage';
 import ProductPage from './pages/ProductPage';
 import MaternityPage from './pages/MaternityPage';
 import MaternityListPage from './pages/MaternityListPage';
+import SarpaPage from './pages/SarpaPage';
 import CartPage from './pages/CartPage';
 import AccountPage from './pages/AccountPage';
 import SuccessPage from './pages/SuccessPage';
@@ -17,7 +18,7 @@ function getInitialStack() {
 }
 
 // Pages that live "under" the Home tab
-const HOME_GROUP = ['home', 'subcategory', 'catalog', 'maternity', 'maternityList', 'product'];
+const HOME_GROUP = ['home', 'subcategory', 'catalog', 'maternity', 'maternityList', 'sarpa', 'product'];
 
 export default function App() {
   const [stack, setStack] = useState(getInitialStack);
@@ -69,6 +70,7 @@ export default function App() {
             onCategoriesLoaded={handleCategoriesLoaded}
             onOpenProduct={openProduct}
             onOpenMaternity={() => push({ page: 'maternity' })}
+            onOpenSarpa={() => push({ page: 'sarpa' })}
           />
         )}
 
@@ -101,6 +103,10 @@ export default function App() {
             onOpenProduct={openProduct}
             onOpenCart={() => goTab('cart')}
           />
+        )}
+
+        {current.page === 'sarpa' && (
+          <SarpaPage onBack={back} onOpenProduct={openProduct} onOpenCart={() => goTab('cart')} />
         )}
 
         {current.page === 'product' && (

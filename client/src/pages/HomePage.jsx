@@ -32,13 +32,13 @@ function norm(s) {
   return (s || '').toLowerCase().replace(/[^a-z0-9а-яёa-z]/gi, '');
 }
 
-export default function HomePage({ onCategorySelect, onCategoriesLoaded, onOpenProduct, onOpenMaternity }) {
+export default function HomePage({ onCategorySelect, onCategoriesLoaded, onOpenProduct, onOpenMaternity, onOpenSarpa }) {
   const { total } = useCart();
   const [bannerIdx, setBannerIdx] = useState(0);
   const [categories, setCategories] = useState([]);
   const [iconNames, setIconNames] = useState([]);
-  const [recommended, setRecommended] = useState([]);
-  const [loadingRec, setLoadingRec] = useState(true);
+  const [toys, setToys] = useState([]);
+  const [loadingToys, setLoadingToys] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -55,19 +55,19 @@ export default function HomePage({ onCategorySelect, onCategoriesLoaded, onOpenP
   }, []);
 
   useEffect(() => {
+    fetchIconNames().then(setIconNames);
+
     fetchCategories()
       .then(cats => {
         setCategories(cats.filter(c => !c.parentId));
         if (onCategoriesLoaded) onCategoriesLoaded(cats);
+        // Toys section — products from the toys category
+        const toysCat = cats.find(c => /oyinchoq|игрушк|toy/i.test(c.name));
+        return fetchProducts({ limit: 10, categoryId: toysCat ? toysCat.id : undefined });
       })
-      .catch(console.error);
-
-    fetchIconNames().then(setIconNames);
-
-    fetchProducts({ limit: 8 })
-      .then(d => setRecommended(expandProducts(d.products)))
+      .then(d => { if (d) setToys(expandProducts(d.products)); })
       .catch(console.error)
-      .finally(() => setLoadingRec(false));
+      .finally(() => setLoadingToys(false));
   }, []);
 
   // Debounced search
@@ -157,28 +157,33 @@ export default function HomePage({ onCategorySelect, onCategoriesLoaded, onOpenP
           </div>
         ) : (
           <>
-            {/* Banner Carousel */}
-            <div
-              style={s.bannerWrap}
-              onTouchStart={onBannerTouchStart}
-              onTouchEnd={onBannerTouchEnd}
-            >
-              <img
-                key={bannerIdx}
-                src={BANNERS[bannerIdx].src}
-                alt={BANNERS[bannerIdx].alt}
-                style={s.bannerImg}
-              />
-              <div style={s.bannerDots}>
-                {BANNERS.map((_, i) => (
-                  <button
-                    key={i}
-                    style={{ ...s.dot, ...(i === bannerIdx ? s.dotActive : {}) }}
-                    onClick={() => { clearInterval(timerRef.current); setBannerIdx(i); }}
-                  />
-                ))}
+            {/* Delivery banner */}
+            {total > 0 ? (
+              <div style={s.deliveryCard}>
+                <span style={{ fontSize: 24 }}>🚚</span>
+                <div style={{ flex: 1 }}>
+                  {deliveryLeft > 0 ? (
+                    <p style={s.deliveryText}>
+                      Добавьте на <b>{formatPrice(deliveryLeft)} сум</b> для бесплатной доставки
+                    </p>
+                  ) : (
+                    <p style={s.deliveryText}><b>Бесплатная доставка! 🎉</b></p>
+                  )}
+                  <div style={s.progressBg}>
+                    <div style={{ ...s.progressFill, width: `${deliveryPct}%` }} />
+                  </div>
+                  <div style={s.progressLabels}>
+                    <span>{formatPrice(total)} сум</span>
+                    <span>800 000 сум</span>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div style={s.deliveryCardSimple}>
+                <span style={{ fontSize: 22 }}>🚚</span>
+                <span style={s.deliverySimpleText}>Бесплатная доставка при заказе от 800 000 сум</span>
+              </div>
+            )}
 
             {/* Categories — no section title */}
             <div style={s.catSection}>
@@ -209,6 +214,28 @@ export default function HomePage({ onCategorySelect, onCategoriesLoaded, onOpenP
               </div>
             </div>
 
+            {/* Сарпа banner — image with CSS fallback (put /banners/sarpa.png to use a photo) */}
+            <div style={s.imgBannerWrap} onClick={onOpenSarpa}>
+              <img
+                src="/banners/sarpa.png"
+                alt="Соберите сарпу"
+                style={s.imgBanner}
+                onError={e => {
+                  e.currentTarget.style.display = 'none';
+                  const fb = e.currentTarget.parentElement.querySelector('.fb-sarpa');
+                  if (fb) fb.style.display = 'flex';
+                }}
+              />
+              <div className="fb-sarpa" style={s.sarpaFallback}>
+                <div style={s.mbText}>
+                  <span style={s.mbTitle}>Соберите сарпу для малыша 🧸</span>
+                  <span style={s.mbSub}>Выбирайте только нужное и создайте идеальную сарпу сами</span>
+                  <span style={s.mbBtn}>Собрать сарпу →</span>
+                </div>
+                <div style={s.mbEmoji}>🧸</div>
+              </div>
+            </div>
+
             {/* Maternity bag banner */}
             <button style={s.maternityBanner} onClick={onOpenMaternity}>
               <div style={s.mbText}>
@@ -219,50 +246,45 @@ export default function HomePage({ onCategorySelect, onCategoriesLoaded, onOpenP
               <div style={s.mbEmoji}>🐝</div>
             </button>
 
-            {/* Delivery banner */}
-            {total > 0 ? (
-              <div style={s.deliveryCard}>
-                <span style={{ fontSize: 24 }}>🚚</span>
-                <div style={{ flex: 1 }}>
-                  {deliveryLeft > 0 ? (
-                    <p style={s.deliveryText}>
-                      Добавьте на <b>{formatPrice(deliveryLeft)} сум</b> для бесплатной доставки
-                    </p>
-                  ) : (
-                    <p style={s.deliveryText}><b>Бесплатная доставка! 🎉</b></p>
-                  )}
-                  <div style={s.progressBg}>
-                    <div style={{ ...s.progressFill, width: `${deliveryPct}%` }} />
-                  </div>
-                  <div style={s.progressLabels}>
-                    <span>{formatPrice(total)} сум</span>
-                    <span>800 000 сум</span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div style={s.deliveryCardSimple}>
-                <span style={{ fontSize: 22 }}>🚚</span>
-                <span style={s.deliverySimpleText}>Бесплатная доставка при заказе от 800 000 сум</span>
-              </div>
-            )}
-
-            {/* Recommended */}
+            {/* Toys */}
             <div style={s.recSection}>
-              <h2 style={s.recTitle}>Рекомендуем для вас</h2>
-              {loadingRec ? (
+              <h2 style={s.recTitle}>Игрушки</h2>
+              {loadingToys ? (
                 <div style={s.recScroll}>
                   {[1, 2, 3].map(i => <div key={i} style={s.recSkeleton} />)}
                 </div>
               ) : (
                 <div style={s.recScroll}>
-                  {recommended.map(p => (
+                  {toys.map(p => (
                     <div key={p.id} style={s.recCardWrap}>
                       <ProductCard product={p} onOpenModal={onOpenProduct} />
                     </div>
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Banner Carousel — at the bottom */}
+            <div
+              style={s.bannerWrap}
+              onTouchStart={onBannerTouchStart}
+              onTouchEnd={onBannerTouchEnd}
+            >
+              <img
+                key={bannerIdx}
+                src={BANNERS[bannerIdx].src}
+                alt={BANNERS[bannerIdx].alt}
+                style={s.bannerImg}
+              />
+              <div style={s.bannerDots}>
+                {BANNERS.map((_, i) => (
+                  <button
+                    key={i}
+                    style={{ ...s.dot, ...(i === bannerIdx ? s.dotActive : {}) }}
+                    onClick={() => { clearInterval(timerRef.current); setBannerIdx(i); }}
+                  />
+                ))}
+              </div>
             </div>
 
             <div style={{ height: 16 }} />
@@ -324,6 +346,19 @@ const s = {
   catIcon: { width: '88%', height: '88%', objectFit: 'contain' },
   catIconFallback: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 },
   catName: { fontSize: 10, fontWeight: 600, color: '#3D2400', textAlign: 'center', lineHeight: 1.3, maxWidth: 78, wordBreak: 'break-word' },
+
+  // Сарпа banner (image + fallback)
+  imgBannerWrap: {
+    margin: '0 16px 14px', borderRadius: 18, overflow: 'hidden',
+    position: 'relative', cursor: 'pointer',
+    boxShadow: '0 4px 18px rgba(245,166,35,0.18)',
+  },
+  imgBanner: { width: '100%', display: 'block', aspectRatio: '2/1', objectFit: 'cover' },
+  sarpaFallback: {
+    display: 'none', width: '100%', boxSizing: 'border-box',
+    background: 'linear-gradient(135deg, #FFFDF5 0%, #FFE9A8 100%)',
+    padding: '16px 18px', alignItems: 'center', gap: 12,
+  },
 
   // Maternity bag banner
   maternityBanner: {

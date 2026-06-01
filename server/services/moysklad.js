@@ -15,6 +15,24 @@ function formatPrice(raw) {
   return raw / 100;
 }
 
+// Cyrillic → Latin map for language-independent search (ф→f, etc.)
+const TRANSLIT = {
+  а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z',
+  и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r',
+  с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'ts', ч: 'ch', ш: 'sh',
+  щ: 'sch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya',
+};
+
+// Normalize a string for search: lowercase, transliterate cyrillic→latin, strip non-alphanumeric
+function normalizeSearch(s) {
+  return (s || '')
+    .toLowerCase()
+    .split('')
+    .map((ch) => (ch in TRANSLIT ? TRANSLIT[ch] : ch))
+    .join('')
+    .replace(/[^a-z0-9]/g, '');
+}
+
 // Get all product categories with parent info
 async function getCategories() {
   const res = await api.get('/entity/productfolder?limit=100&order=name');
@@ -124,11 +142,15 @@ async function getAllRawProducts() {
 
 // Get products with pagination, optionally filtered by category or search query
 async function getProducts({ limit = 50, offset = 0, categoryIds = null, search = null } = {}) {
-  // Search: MoySklad name~ filter works fine
+  // Search: in-memory, language-independent (ф↔f), substring match on all products
   if (search) {
-    const data = await fetchRawProducts({ limit, offset, search });
-    const products = await buildProductsSequentially(data.rows);
-    return { products, total: data.meta.size, offset: data.meta.offset };
+    const allRows = await getAllRawProducts();
+    const q = normalizeSearch(search);
+    if (!q) return { products: [], total: 0, offset };
+    const matched = allRows.filter((p) => normalizeSearch(p.name).includes(q));
+    const page = matched.slice(offset, offset + limit);
+    const products = await buildProductsSequentially(page);
+    return { products, total: matched.length, offset };
   }
 
   // No category filter: direct paginated request (fast)

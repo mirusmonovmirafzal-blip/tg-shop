@@ -7,6 +7,7 @@ const productsRouter = require('./routes/products');
 const { router: ordersRouter } = require('./routes/orders');
 const clickRouter = require('./routes/click');
 const maternityRouter = require('./routes/maternity');
+const sarpaRouter = require('./routes/sarpa');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 // API routes
 app.use('/api', productsRouter);
 app.use('/api', maternityRouter);
+app.use('/api', sarpaRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/click', clickRouter);
 

@@ -21,6 +21,12 @@ export async function fetchMaternityBag() {
   return res.json();
 }
 
+export async function fetchSarpa() {
+  const res = await fetch(`${BASE}/sarpa`);
+  if (!res.ok) throw new Error('Failed to load sarpa');
+  return res.json();
+}
+
 export async function fetchIconNames() {
   try {
     const res = await fetch(`${BASE}/icon-names`);
