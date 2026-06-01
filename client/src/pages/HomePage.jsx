@@ -3,7 +3,6 @@ import { fetchCategories, fetchProducts, fetchIconNames } from '../api';
 import { getVariantMode, expandColorVariants } from '../utils/variantMode';
 import { useCart } from '../context/CartContext';
 import ProductCard from '../components/ProductCard';
-import ProductModal from '../components/ProductModal';
 
 const BANNERS = [
   { src: '/banners/banner1.png', alt: 'Подгузники' },
@@ -33,14 +32,13 @@ function norm(s) {
   return (s || '').toLowerCase().replace(/[^a-z0-9а-яёa-z]/gi, '');
 }
 
-export default function HomePage({ onCategorySelect, onCategoriesLoaded }) {
+export default function HomePage({ onCategorySelect, onCategoriesLoaded, onOpenProduct, onOpenMaternity }) {
   const { total } = useCart();
   const [bannerIdx, setBannerIdx] = useState(0);
   const [categories, setCategories] = useState([]);
   const [iconNames, setIconNames] = useState([]);
   const [recommended, setRecommended] = useState([]);
   const [loadingRec, setLoadingRec] = useState(true);
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -152,7 +150,7 @@ export default function HomePage({ onCategorySelect, onCategoriesLoaded }) {
             ) : (
               <div style={s.grid}>
                 {searchResults.map(p => (
-                  <ProductCard key={p.id} product={p} onOpenModal={setSelectedProduct} />
+                  <ProductCard key={p.id} product={p} onOpenModal={onOpenProduct} />
                 ))}
               </div>
             )}
@@ -211,6 +209,16 @@ export default function HomePage({ onCategorySelect, onCategoriesLoaded }) {
               </div>
             </div>
 
+            {/* Maternity bag banner */}
+            <button style={s.maternityBanner} onClick={onOpenMaternity}>
+              <div style={s.mbText}>
+                <span style={s.mbTitle}>Соберите сумку в роддом 🧳</span>
+                <span style={s.mbSub}>Список самых нужных вещей для мамы и малыша</span>
+                <span style={s.mbBtn}>Перейти к списку →</span>
+              </div>
+              <div style={s.mbEmoji}>🐝</div>
+            </button>
+
             {/* Delivery banner */}
             {total > 0 ? (
               <div style={s.deliveryCard}>
@@ -250,7 +258,7 @@ export default function HomePage({ onCategorySelect, onCategoriesLoaded }) {
                 <div style={s.recScroll}>
                   {recommended.map(p => (
                     <div key={p.id} style={s.recCardWrap}>
-                      <ProductCard product={p} onOpenModal={setSelectedProduct} />
+                      <ProductCard product={p} onOpenModal={onOpenProduct} />
                     </div>
                   ))}
                 </div>
@@ -261,10 +269,6 @@ export default function HomePage({ onCategorySelect, onCategoriesLoaded }) {
           </>
         )}
       </div>
-
-      {selectedProduct && (
-        <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
-      )}
     </div>
   );
 }
@@ -320,6 +324,20 @@ const s = {
   catIcon: { width: '88%', height: '88%', objectFit: 'contain' },
   catIconFallback: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 },
   catName: { fontSize: 10, fontWeight: 600, color: '#3D2400', textAlign: 'center', lineHeight: 1.3, maxWidth: 78, wordBreak: 'break-word' },
+
+  // Maternity bag banner
+  maternityBanner: {
+    margin: '0 16px 14px', width: 'calc(100% - 32px)',
+    background: 'linear-gradient(135deg, #FFF6D6 0%, #FFE08A 100%)',
+    borderRadius: 18, padding: '16px 18px', cursor: 'pointer', border: 'none',
+    display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
+    boxShadow: '0 4px 18px rgba(245,166,35,0.18)',
+  },
+  mbText: { flex: 1, display: 'flex', flexDirection: 'column', gap: 5 },
+  mbTitle: { fontSize: 17, fontWeight: 800, color: '#3D2400', lineHeight: 1.25 },
+  mbSub: { fontSize: 12, color: '#8A6D3B', lineHeight: 1.4 },
+  mbBtn: { fontSize: 13, fontWeight: 700, color: '#F5A623', marginTop: 4 },
+  mbEmoji: { fontSize: 44, flexShrink: 0 },
 
   // Delivery
   deliveryCard: {

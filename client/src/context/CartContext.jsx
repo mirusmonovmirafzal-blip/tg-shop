@@ -5,14 +5,16 @@ const CartContext = createContext(null);
 function cartReducer(state, action) {
   switch (action.type) {
     case 'ADD': {
+      const qty = action.item.quantity || 1;
       const key = action.item.variantId
         ? `${action.item.productId}_${action.item.variantId}`
         : action.item.productId;
       const existing = state.find((i) => i.key === key);
       if (existing) {
-        return state.map((i) => (i.key === key ? { ...i, quantity: i.quantity + 1 } : i));
+        return state.map((i) => (i.key === key ? { ...i, quantity: i.quantity + qty } : i));
       }
-      return [...state, { ...action.item, key, quantity: 1 }];
+      const { quantity, ...rest } = action.item;
+      return [...state, { ...rest, key, quantity: qty }];
     }
     case 'REMOVE': {
       return state.filter((i) => i.key !== action.key);

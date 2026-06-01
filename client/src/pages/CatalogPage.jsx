@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { fetchProducts } from '../api';
 import { getVariantMode, expandColorVariants } from '../utils/variantMode';
 import ProductCard from '../components/ProductCard';
-import ProductModal from '../components/ProductModal';
 
 const LIMIT = 30;
 
@@ -17,13 +16,12 @@ function expandProducts(products) {
   return result;
 }
 
-export default function CatalogPage({ category, onBack }) {
+export default function CatalogPage({ category, onBack, onOpenProduct }) {
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
     setProducts([]); setOffset(0); setLoading(true);
@@ -71,7 +69,7 @@ export default function CatalogPage({ category, onBack }) {
           <>
             <div style={s.grid}>
               {products.map(p => (
-                <ProductCard key={p.id} product={p} onOpenModal={setSelectedProduct} />
+                <ProductCard key={p.id} product={p} onOpenModal={onOpenProduct} />
               ))}
             </div>
             {products.length < total && (
@@ -82,10 +80,6 @@ export default function CatalogPage({ category, onBack }) {
           </>
         )}
       </div>
-
-      {selectedProduct && (
-        <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
-      )}
     </div>
   );
 }

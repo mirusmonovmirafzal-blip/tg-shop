@@ -209,4 +209,4 @@ async function getDefaultOrganization() {
   return _orgCache;
 }
 
-module.exports = { getCategories, getProducts, getVariants, createOrder, getCategoryImage, BASE_URL };
+module.exports = { getCategories, getProducts, getVariants, createOrder, getCategoryImage, getAllRawProducts, buildProductsSequentially, BASE_URL };

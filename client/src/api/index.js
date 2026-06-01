@@ -15,6 +15,12 @@ export async function fetchProducts({ limit = 30, offset = 0, categoryId, search
   return res.json();
 }
 
+export async function fetchMaternityBag() {
+  const res = await fetch(`${BASE}/maternity-bag`);
+  if (!res.ok) throw new Error('Failed to load maternity bag');
+  return res.json();
+}
+
 export async function fetchIconNames() {
   try {
     const res = await fetch(`${BASE}/icon-names`);
